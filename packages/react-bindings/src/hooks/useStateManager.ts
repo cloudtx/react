@@ -21,10 +21,10 @@ const useStateManager = <
 ): [Readonly<State>, Readonly<Actions>] => {
   const latestManager = React.useRef<Manager<State, Actions> | null>(null)
 
-  // Heads up! setState() is used only for triggering rerenders stateManager is SSOT()
-  const [, setState] = React.useState()
+  // Heads up! forceUpdate() is used only for triggering rerenders stateManager is SSOT()
+  const [, forceUpdate] = React.useState()
   const syncState = React.useCallback(
-    (manager: Manager<State, Actions>) => setState(manager.state),
+    (manager: Manager<State, Actions>) => forceUpdate(manager.state),
     [],
   )
 
