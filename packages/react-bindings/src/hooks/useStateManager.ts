@@ -71,6 +71,11 @@ const useStateManager = <State extends Record<string, any>, Actions extends AnyA
 
   latestManager.current = manager
 
+  // We need to pass exactly `manager.state` to provide the same state object during the same render
+  // frame.
+  // It keeps behavior consistency between React state tools and our managers
+  // https://github.com/facebook/react/issues/11527#issuecomment-360199710
+
   if (process.env.NODE_ENV === 'production') {
     return [manager.state, manager.actions]
   }
