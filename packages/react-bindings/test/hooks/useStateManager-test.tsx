@@ -23,6 +23,7 @@ const createTestManager: ManagerFactory<TestState, TestActions> = config =>
 
 type TestComponentProps = Partial<TestState> & {
   color?: string
+  onChange?: (value: string) => void
 
   defaultOpen?: boolean
   open?: boolean
@@ -32,15 +33,31 @@ type TestComponentProps = Partial<TestState> & {
 }
 
 const TestComponent: React.FunctionComponent<TestComponentProps> = props => {
-  const [state, actions] = useStateManager(createTestManager, props, {
-    autoControlledProps: ['open', 'value'],
+  const [state, actions] = useStateManager(createTestManager, {
+    mapPropsToInitialState: () => ({
+      open: props.defaultOpen,
+      value: props.defaultValue,
+    }),
+    mapPropsToState: () => ({
+      open: props.open,
+      value: props.value,
+    }),
   })
 
   return (
     <>
       <div className={`open-${state.open}`} />
 
-      <input onChange={e => actions.change(e.target.value)} value={state.value} />
+      <input
+        onChange={e => {
+          // Is used in UTs to check that state values is not changed
+          if (props.onChange) props.onChange(state.value)
+
+          actions.change(e.target.value)
+          if (props.onChange) props.onChange(state.value)
+        }}
+        value={state.value}
+      />
       <button className={props.color} onClick={() => actions.toggle()} />
     </>
   )
@@ -117,5 +134,18 @@ describe('useStateManager', () => {
       wrapper.setProps({ open: undefined })
     })
     expect(wrapper.find('div').prop('className')).toBe('open-true')
+  })
+
+  it('state values are immutable as in React', () => {
+    const onChange = jest.fn()
+    const wrapper = shallow(<TestComponent onChange={onChange} value="foo" />)
+
+    ReactTestUtils.act(() => {
+      wrapper.find('input').simulate('change', { target: { value: 'baz' } })
+    })
+
+    expect(onChange).toHaveBeenCalledTimes(2)
+    expect(onChange).toHaveBeenNthCalledWith(1, 'foo')
+    expect(onChange).toHaveBeenNthCalledWith(2, 'foo')
   })
 })

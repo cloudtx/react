@@ -1,29 +1,33 @@
-import {
-  AnyActions,
-  EnhancedActions,
-  Manager,
-  ManagerFactory,
-  Middleware,
-} from '@stardust-ui/state'
+import { AnyActions, EnhancedActions, Manager, ManagerFactory } from '@stardust-ui/state'
 import * as React from 'react'
 
-import { getDefinedAutoControlledProps, getInitialAutoControlledState } from './stateUtils'
-
-type UseStateManagerOptions<Props> = {
-  autoControlledProps?: (keyof Props)[]
+type UseStateManagerOptions<State> = {
+  mapPropsToInitialState?: () => Partial<State>
+  mapPropsToState?: () => Partial<State>
 }
 
-const useStateManager = <
-  State,
-  Actions extends AnyActions,
-  Props extends Partial<State>,
-  AProps extends keyof State
->(
-  managerFactory: ManagerFactory<State, Actions>,
+export const getDefinedProps = <Props extends Record<string, any>>(
   props: Props,
-  options: UseStateManagerOptions<Props> = {},
+): Partial<Props> => {
+  const definedProps: Partial<Props> = {}
+
+  Object.keys(props).forEach(propName => {
+    if (props[propName] !== undefined) {
+      definedProps[propName] = props[propName]
+    }
+  })
+
+  return definedProps
+}
+
+const useStateManager = <State extends Record<string, any>, Actions extends AnyActions>(
+  managerFactory: ManagerFactory<State, Actions>,
+  options: UseStateManagerOptions<State> = {},
 ): [Readonly<State>, Readonly<Actions>] => {
-  const { autoControlledProps = [] } = options
+  const {
+    mapPropsToInitialState = () => ({} as Partial<State>),
+    mapPropsToState = () => ({} as Partial<State>),
+  } = options
   const latestManager = React.useRef<Manager<State, Actions> | null>(null)
 
   // Heads up! forceUpdate() is used only for triggering rerenders stateManager is SSOT()
@@ -33,35 +37,37 @@ const useStateManager = <
     [],
   )
 
-  const definedAutoControlledProps = getDefinedAutoControlledProps(autoControlledProps, props)
+  const propsForState = mapPropsToState()
   // Is used as dependencies to recreate manager
-  const autoControlledValues = autoControlledProps.reduce(
-    (values: any[], propName: AProps) => [...values, props[propName]],
-    [],
+  // Should include possibly undefined props
+  const propsForStateValues = Object.keys(propsForState).map(
+    (propName: string): any => propsForState[propName],
   )
 
-  const overrideAutoControlledProps: Middleware<State, Actions> = (
-    _prevState: State,
-    nextState: State,
-  ) => ({
-    ...nextState,
-    ...definedAutoControlledProps,
-  })
+  // TODO: Try to find, may it's required
+  // const overrideAutoControlledProps: Middleware<State, Actions> = (
+  //   _prevState: State,
+  //   nextState: State,
+  // ) => ({
+  //   ...nextState,
+  //   ...mapPropsToState(),
+  // })
 
   const manager = React.useMemo(() => {
     // If manager exists, the current state will be used
     const initialState = latestManager.current
-      ? { ...latestManager.current.state, ...definedAutoControlledProps }
-      : getInitialAutoControlledState(autoControlledProps, props)
+      ? latestManager.current.state
+      : getDefinedProps(mapPropsToInitialState())
 
     return managerFactory({
       // Factory has already configured actions
       actions: {} as EnhancedActions<State, Actions>,
-      state: initialState,
-      middleware: [overrideAutoControlledProps],
+      state: { ...initialState, ...getDefinedProps(propsForState) },
+      // TODO: Try to find, may it's required
+      // middleware: [overrideAutoControlledProps],
       sideEffects: [syncState],
     })
-  }, autoControlledValues)
+  }, propsForStateValues)
 
   latestManager.current = manager
 
