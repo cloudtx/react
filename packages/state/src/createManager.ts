@@ -20,9 +20,12 @@ const createManager = <State, Actions extends AnyActions>(
   Object.keys(actions).forEach(actionName => {
     const enhancedAction = actions[actionName]
     const action = (...args: Parameters<typeof enhancedAction>) => {
+      const prevState = getState()
+
       applyAction(enhancedAction, ...args)
-      applyMiddleware()
-      applySideEffects()
+
+      applyMiddleware(prevState)
+      applySideEffects(prevState)
     }
 
     manager.actions[actionName] = action
@@ -37,14 +40,14 @@ const createManager = <State, Actions extends AnyActions>(
         console.log('manager ACTION', action.name || 'Anonymous')
       }
     }
-
     const actionResult = action(...args)(getState(), manager.actions)
-    if (actionResult) setState(actionResult)
+
+    if (actionResult) {
+      setState(actionResult)
+    }
   }
 
-  const applyMiddleware = () => {
-    const prevState = getState()
-
+  const applyMiddleware = (prevState: State) => {
     middleware.forEach((middlewareItem, index) => {
       if (process.env.NODE_ENV !== 'production') {
         if (debug) {
@@ -59,16 +62,15 @@ const createManager = <State, Actions extends AnyActions>(
     })
   }
 
-  const applySideEffects = (): void => {
-    if (!sideEffects) return
-
+  const applySideEffects = (prevState: State): void => {
     sideEffects.forEach((sideEffect, index) => {
       if (process.env.NODE_ENV !== 'production') {
         if (debug) {
           console.log(`manager SIDE_EFFECT[${index}]`)
         }
       }
-      sideEffect(manager)
+
+      sideEffect(prevState, manager.state)
     })
   }
 

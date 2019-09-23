@@ -7,7 +7,7 @@ export type Middleware<State, Actions> = (
   actions: Actions,
 ) => Partial<State>
 
-export type SideEffect<State, Actions> = (manager: Manager<State, Actions>) => void
+export type SideEffect<State> = (prevState: State, nextState: State) => void
 
 export type EnhancedAction<
   State,
@@ -24,7 +24,7 @@ export type ManagerConfig<State, Actions extends AnyActions> = {
   debug?: boolean
   middleware?: Middleware<State, Actions>[]
   state?: Partial<State>
-  sideEffects?: SideEffect<State, Actions>[]
+  sideEffects?: SideEffect<State>[]
 }
 
 export type ManagerFactory<State, Actions extends AnyActions> = (
