@@ -9,6 +9,10 @@ import * as React from 'react'
 
 import { getDefinedAutoControlledProps, getInitialAutoControlledState } from './stateUtils'
 
+type UseStateManagerOptions<Props> = {
+  autoControlledProps?: (keyof Props)[]
+}
+
 const useStateManager = <
   State,
   Actions extends AnyActions,
@@ -17,14 +21,15 @@ const useStateManager = <
 >(
   managerFactory: ManagerFactory<State, Actions>,
   props: Props,
-  autoControlledProps: (keyof Props)[] = [],
+  options: UseStateManagerOptions<Props> = {},
 ): [Readonly<State>, Readonly<Actions>] => {
+  const { autoControlledProps = [] } = options
   const latestManager = React.useRef<Manager<State, Actions> | null>(null)
 
   // Heads up! forceUpdate() is used only for triggering rerenders stateManager is SSOT()
   const [, forceUpdate] = React.useState()
   const syncState = React.useCallback(
-    (manager: Manager<State, Actions>) => forceUpdate(manager.state),
+    (_prevState: State, nextState: State) => forceUpdate(nextState),
     [],
   )
 

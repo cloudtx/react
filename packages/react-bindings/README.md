@@ -55,7 +55,9 @@ const createInputManager: ManagerFactory<InputState, InputActions> = config =>
   })
 
 const Input: React.FC<InputProps> = () => {
-  const [state, actions] = useStateManager(createToggleManager, props, ['open'])
+  const [state, actions] = useStateManager(createToggleManager, props, {
+    autoControlledProps: ['value']
+  })
 
   return <input onChange={e => { 
 actions.change(e.target.value)
@@ -67,14 +69,16 @@ if (props.onChange) onChange(e.target.value)
 ### Reference
 
 ```tsx
-const [state, actions] = useStateManager(createToggleManager, props, ['open'])
+const [state, actions] = useStateManager(createToggleManager, props, {
+  autoControlledProps: ['value']
+})
 const [state, actions] = useStateManager(
   managerFactory: ManagerFactory<State, Actions>, 
   props: Props,
-  autoControlledProps: (keyof Props)[] = [],
+  options: UseStateManagerOptions<Props>,
 )
 ```
 
 - `managerFactory` - a factory that implements state manager API
 - `props` - all component props
-- `autoControlledProps` - optional and is required only if your component implements [controlled mode](https://reactjs.org/docs/uncontrolled-components.html).
+- `options.autoControlledProps` - optional and is required only if your component implements [controlled mode](https://reactjs.org/docs/uncontrolled-components.html).

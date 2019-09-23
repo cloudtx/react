@@ -32,7 +32,9 @@ type TestComponentProps = Partial<TestState> & {
 }
 
 const TestComponent: React.FunctionComponent<TestComponentProps> = props => {
-  const [state, actions] = useStateManager(createTestManager, props, ['open', 'value'])
+  const [state, actions] = useStateManager(createTestManager, props, {
+    autoControlledProps: ['open', 'value'],
+  })
 
   return (
     <>
