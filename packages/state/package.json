@@ -1,7 +1,7 @@
 {
   "name": "@stardust-ui/state",
   "description": "A set of utils to create framework agnostic and reusable state managers",
-  "version": "0.39.0-2",
+  "version": "0.39.0",
   "author": "Oleksandr Fediashov <a@fedyashov.com>",
   "bugs": "https://github.com/stardust-ui/react/issues",
   "devDependencies": {
