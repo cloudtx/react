@@ -1,0 +1,42 @@
+import { AnyAction, SideEffect } from '@stardust-ui/state'
+import * as React from 'react'
+
+type DispatchEffect<Props, State> = (
+  e: DispatchEvent,
+  props: Props,
+  prevState: State,
+  nextState: State,
+) => void
+type DispatchEvent = React.SyntheticEvent | Event
+
+const useDispatchEffect = <Props, State>(
+  props: Props,
+  dispatchEffect: DispatchEffect<Props, State>,
+) => {
+  const latestEffect = React.useRef<DispatchEffect<Props, State>>(dispatchEffect)
+  const latestEvent = React.useRef<DispatchEvent | null>(null)
+  const latestProps = React.useRef<Props>(props)
+
+  latestEffect.current = dispatchEffect
+  latestProps.current = props
+
+  const dispatch = React.useCallback((e: DispatchEvent, action: AnyAction, ...args) => {
+    latestEvent.current = e
+    console.log('dispatch')
+    action(...args)
+
+    latestEvent.current = null
+  }, [])
+  const sideEffect = React.useCallback<SideEffect<State>>((prevState, nextState) => {
+    return latestEffect.current(
+      latestEvent.current as DispatchEvent,
+      latestProps.current,
+      prevState,
+      nextState,
+    )
+  }, [])
+
+  return [dispatch, sideEffect]
+}
+
+export default useDispatchEffect

@@ -42,8 +42,8 @@ import { useStateManager } from "@stardust-ui/react-bindings";
 import { createManager, ManagerFactory } from "@stardust-ui/state";
 
 type InputProps = {
-  value?: string;
   defaultValue?: string;
+  value?: string;
   onChange: (value: string) => void;
 };
 type InputState = { value: string };
@@ -60,7 +60,8 @@ const createInputManager: ManagerFactory<InputState, InputActions> = config =>
 
 const Input: React.FC<InputProps> = () => {
   const [state, actions] = useStateManager(createToggleManager, props, {
-    autoControlledProps: ["value"]
+    mapPropsToInitialState = () => ({ value: props.defaultValue }),
+    mapPropsToState = () => ({ value: props.value })
   });
 
   return (
@@ -73,7 +74,6 @@ const Input: React.FC<InputProps> = () => {
     />
   );
 };
-
 ```
 
 ### Reference
@@ -90,5 +90,5 @@ const [state, actions] = useStateManager(
 ```
 
 - `managerFactory` - a factory that implements state manager API
-- `props` - all component props
-- `options.autoControlledProps` - optional and is required only if your component implements [controlled mode](https://reactjs.org/docs/uncontrolled-components.html).
+- `options.mapPropsToInitialState` - optional, maps component's props to the initial state
+- `options.mapPropsToState` - optional, maps component's props to the state, should be used if your component implements [controlled mode](https://reactjs.org/docs/uncontrolled-components.html).
