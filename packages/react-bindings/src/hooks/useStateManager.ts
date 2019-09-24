@@ -1,9 +1,16 @@
-import { AnyActions, EnhancedActions, Manager, ManagerFactory } from '@stardust-ui/state'
+import {
+  AnyActions,
+  EnhancedActions,
+  Manager,
+  ManagerFactory,
+  SideEffect,
+} from '@stardust-ui/state'
 import * as React from 'react'
 
 type UseStateManagerOptions<State> = {
   mapPropsToInitialState?: () => Partial<State>
   mapPropsToState?: () => Partial<State>
+  sideEffects?: SideEffect<State>[]
 }
 
 export const getDefinedProps = <Props extends Record<string, any>>(
@@ -27,6 +34,7 @@ const useStateManager = <State extends Record<string, any>, Actions extends AnyA
   const {
     mapPropsToInitialState = () => ({} as Partial<State>),
     mapPropsToState = () => ({} as Partial<State>),
+    sideEffects = [],
   } = options
   const latestManager = React.useRef<Manager<State, Actions> | null>(null)
 
@@ -38,20 +46,11 @@ const useStateManager = <State extends Record<string, any>, Actions extends AnyA
   )
 
   const propsForState = mapPropsToState()
-  // Is used as dependencies to recreate manager
-  // Should include possibly undefined props
+  // Is used as dependencies to recreate manager, should include even undefined props to avoid
+  // order changes
   const propsForStateValues = Object.keys(propsForState).map(
     (propName: string): any => propsForState[propName],
   )
-
-  // TODO: Try to find, may it's required
-  // const overrideAutoControlledProps: Middleware<State, Actions> = (
-  //   _prevState: State,
-  //   nextState: State,
-  // ) => ({
-  //   ...nextState,
-  //   ...mapPropsToState(),
-  // })
 
   const manager = React.useMemo(() => {
     // If manager exists, the current state will be used
@@ -63,11 +62,9 @@ const useStateManager = <State extends Record<string, any>, Actions extends AnyA
       // Factory has already configured actions
       actions: {} as EnhancedActions<State, Actions>,
       state: { ...initialState, ...getDefinedProps(propsForState) },
-      // TODO: Try to find, may it's required
-      // middleware: [overrideAutoControlledProps],
-      sideEffects: [syncState],
+      sideEffects: [...sideEffects, syncState],
     })
-  }, propsForStateValues)
+  }, [...propsForStateValues, ...sideEffects])
 
   latestManager.current = manager
 
