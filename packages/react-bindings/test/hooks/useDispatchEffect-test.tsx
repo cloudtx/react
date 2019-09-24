@@ -27,7 +27,7 @@ type TestComponentProps = Partial<TestState> & {
 }
 
 const TestComponent: React.FunctionComponent<TestComponentProps> = props => {
-  const [dispatch, dispatchEffect] = unstable_useDispatchEffect<TestState>(
+  const [dispatch, dispatchEffect] = unstable_useDispatchEffect<TestState, TestComponentProps>(
     props,
     (e, props, prevState, nextState) => {
       if (prevState.value !== nextState.value) {
@@ -53,7 +53,7 @@ const TestComponent: React.FunctionComponent<TestComponentProps> = props => {
 }
 
 describe('useDispatchEffect', () => {
-  it('TODO', () => {
+  it('calls an action with params', () => {
     const onChange = jest.fn()
     const wrapper = shallow(<TestComponent onChange={onChange} />)
 
@@ -64,7 +64,7 @@ describe('useDispatchEffect', () => {
     expect(wrapper.find('input').prop('value')).toBe('baz')
   })
 
-  it('TODO2', () => {
+  it('calls an action without params', () => {
     const onChange = jest.fn()
     const wrapper = shallow(<TestComponent defaultValue="foo" onChange={onChange} />)
 

@@ -13,12 +13,13 @@ type DispatchEffect<Props, State> = (
   prevState: State,
   nextState: State,
 ) => void
+
 type DispatchEvent = React.SyntheticEvent | Event
 
-const useDispatchEffect = <State, Props extends Record<string, any>, Action extends AnyAction>(
+const useDispatchEffect = <State, Props extends Record<string, any>>(
   props: Props,
   dispatchEffect: DispatchEffect<Props, State>,
-): [Dispatch<Action>, SideEffect<State>] => {
+): [Dispatch<AnyAction>, SideEffect<State>] => {
   const latestEffect = React.useRef<DispatchEffect<Props, State>>(dispatchEffect)
   const latestEvent = React.useRef<DispatchEvent | null>(null)
   const latestProps = React.useRef<Props>(props)
@@ -26,7 +27,7 @@ const useDispatchEffect = <State, Props extends Record<string, any>, Action exte
   latestEffect.current = dispatchEffect
   latestProps.current = props
 
-  const dispatch = React.useCallback<Dispatch<Action>>((e, action, ...args) => {
+  const dispatch = React.useCallback<Dispatch<AnyAction>>((e, action, ...args) => {
     latestEvent.current = e
 
     action(...args)
